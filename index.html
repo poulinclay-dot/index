@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>乞讨 · 求施舍</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@200;300;400;600&family=ZCOOL+XiaoWei&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-deep: #0a0a0f;
+    --bg-card: rgba(255,255,255,0.04);
+    --text-primary: rgba(232,230,240,0.92);
+    --text-muted: rgba(180,176,195,0.55);
+    --accent: #c9a87c;
+    --accent-dim: rgba(201,168,124,0.15);
+    --border-subtle: rgba(255,255,255,0.06);
+    --glow: rgba(201,168,124,0.08);
+  }
+
+  html {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: 'Noto Serif SC', serif;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+
+  /* ===== Ambient Background ===== */
+  .ambient {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .ambient::before {
+    content: '';
+    position: absolute; top: -50%; left: -30%; width: 80%; height: 80%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(60,40,80,0.25) 0%, transparent 70%);
+    animation: drift 20s ease-in-out infinite alternate;
+  }
+  .ambient::after {
+    content: '';
+    position: absolute; bottom: -40%; right: -20%; width: 70%; height: 70%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(40,50,70,0.2) 0%, transparent 70%);
+    animation: drift 25s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes drift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(5%, -5%) scale(1.1); }
+  }
+
+  /* Subtle particle dots */
+  .particles {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+  .particle {
+    position: absolute; width: 2px; height: 2px;
+    background: var(--accent); opacity: 0;
+    border-radius: 50%;
+    animation: float-up linear infinite;
+  }
+
+  @keyframes float-up {
+    0% { opacity: 0; transform: translateY(10vh) scale(0.5); }
+    10% { opacity: 0.35; }
+      90% { opacity: 0.15; }
+    100% { opacity: 0; transform: translateY(-90vh) scale(1); }
+  }
+
+  /* ===== Main Container ===== */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 420px; width: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2rem;
+  }
+
+  /* ===== Header / Poem ===== */
+  .header {
+    text-align: center;
+    padding: 1.5rem 0 0.5rem;
+    animation: fade-in 2s ease-out both;
+  }
+  .header .title {
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: clamp(1.8rem, 6vw, 2.4rem);
+    letter-spacing: 0.6em;
+    color: var(--text-primary);
+    margin-bottom: 0.3em;
+    font-weight: 400;
+  }
+  .header .subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 0.3em;
+    font-weight: 200;
+  }
+  .header .divider {
+    display: block; width: 48px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    margin: 1.2rem auto;
+  }
+  .poem {
+    font-size: 0.82rem;
+    line-height: 2.2;
+    color: var(--text-muted);
+    font-weight: 200;
+    letter-spacing: 0.12em;
+  }
+
+  /* ===== QR Code Card ===== */
+  .qrcode-card {
+    position: relative;
+    background: var(--bg-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 2rem 1.5rem 1.8rem;
+    text-align: center;
+    animation: fade-in-up 1.8s ease-out 0.4s both;
+    box-shadow:
+      0 4px 40px rgba(0,0,0,0.3),
+      0 0 80px var(--glow),
+      inset 0 1px 0 rgba(255,255,255,0.03);
+    overflow: hidden;
+  }
+  .qrcode-card::before {
+    content: '';
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+  }
+
+  .qr-frame {
+    position: relative;
+    width: 220px; height: 220px;
+    margin: 0 auto 1.2rem;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.95);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+  .qr-frame img {
+    width: 100%; height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+
+  /* Corner decorations on QR frame */
+  .qr-frame::before,
+  .qr-frame::after {
+    content: '';
+    position: absolute; width: 18px; height: 18px;
+    border: 1.5px solid var(--accent);
+    opacity: 0.4;
+  }
+  .qr-frame::before { top: -4px; left: -4px; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+  .qr-frame::after { bottom: -4px; right: -4px; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
+
+  .hint-text {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    font-weight: 200;
+  }
+  .hint-text strong {
+    color: var(--accent);
+    font-weight: 300;
+  }
+
+  /* ===== Quote Section ===== */
+  .quote-section {
+    text-align: center;
+    animation: fade-in-up 2s ease-out 0.9s both;
+  }
+  .quote {
+    font-size: 0.78rem;
+    line-height: 2;
+    color: var(--text-muted);
+    font-weight: 200;
+    letter-spacing: 0.1em;
+    font-style: italic;
+  }
+
+  /* ===== Music Control ===== */
+  .music-control {
+    position: fixed; bottom: 2rem; right: 1.5rem;
+    z-index: 100;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-subtle);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(.22,.9,.3,1);
+    animation: fade-in 3s ease-out 1.5s both;
+  }
+  .music-control:hover {
+    border-color: var(--accent-dim);
+    transform: scale(1.08);
+  }
+  .music-control svg {
+    width: 18px; height: 18px;
+    fill: var(--text-muted);
+    transition: fill 0.3s;
+  }
+  .music-control.playing svg {
+    fill: var(--accent);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  /* Pulsing ring to attract attention when muted */
+  .music-control.attention {
+    border-color: var(--accent);
+    animation: fade-in 3s ease-out 1.5s both, attention-pulse 2s ease-in-out 1.5s infinite;
+  }
+  @keyframes attention-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,124,0.3); }
+    50% { box-shadow: 0 0 0 10px rgba(201,168,124,0); }
+  }
+
+  /* ===== Sound Prompt Overlay ===== */
+  .sound-prompt {
+    position: fixed; bottom: 2rem; right: 5.5rem;
+    z-index: 99;
+    background: var(--bg-card);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--accent-dim);
+    border-radius: 12px;
+    padding: 0.6rem 1.1rem;
+    font-size: 0.75rem;
+    color: var(--text-primary);
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+    cursor: pointer;
+    animation: fade-in 2s ease-out 2s both, prompt-bob 3s ease-in-out 2.5s infinite;
+    transition: opacity 0.5s, transform 0.5s;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  }
+  .sound-prompt::after {
+    content: '';
+    position: absolute; right: -6px; top: 50%; transform: translateY(-50%);
+    border: 6px solid transparent;
+    border-left-color: var(--accent-dim);
+  }
+  .sound-prompt.hidden {
+    opacity: 0; transform: translateX(10px); pointer-events: none;
+  }
+  @keyframes prompt-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  .sound-prompt .accent { color: var(--accent); }
+
+  @keyframes pulse-glow {
+    0%, 100% { filter: drop-shadow(0 0 2px var(--glow)); }
+    50% { filter: drop-shadow(0 0 8px var(--accent)); }
+  }
+
+  /* Vinyl record spin when playing */
+  .vinyl-ring {
+    position: absolute;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 1px dashed rgba(201,168,124,0.2);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .music-control.playing .vinyl-ring {
+    opacity: 1;
+    animation: spin 4s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* ===== Footer ===== */
+  .footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    animation: fade-in 2.2s ease-out 1.3s both;
+  }
+  .footer-text {
+    font-size: 0.7rem;
+    color: rgba(120,115,135,0.35);
+    letter-spacing: 0.2em;
+    font-weight: 200;
+  }
+
+  /* ===== Animations ===== */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 480px) {
+    body { padding: 1.5rem 0.8rem; }
+    .container { gap: 1.5rem; }
+    .qrcode-card { padding: 1.5rem 1.2rem 1.4rem; border-radius: 16px; }
+    .qr-frame { width: 190px; height: 190px; padding: 10px; }
+    .header { padding: 1rem 0 0.3rem; }
+    .music-control { bottom: 1.2rem; right: 1rem; width: 40px; height: 40px; }
+    .vinyl-ring { width: 34px; height: 34px; }
+    .sound-prompt { bottom: 1.2rem; right: 4rem; font-size: 0.7rem; padding: 0.5rem 0.9rem; }
+  }
+
+  @media (min-width: 768px) {
+    .container { max-width: 440px; }
+    .qr-frame { width: 240px; height: 240px; }
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Ambient background -->
+<div class="ambient"></div>
+
+<!-- Floating particles -->
+<div class="particles" id="particles"></div>
+
+<!-- Main content -->
+<div class="container">
+
+  <header class="header">
+    <h1 class="title">乞 讨</h1>
+    <span class="subtitle">求 各 位 施 舍 点</span>
+    <span class="divider"></span>
+    <p class="poem">
+      人生在世<br>
+      难免落魄<br>
+      一分也是恩<br>
+      一元也是情
+    </p>
+  </header>
+
+  <!-- QR Code Card -->
+  <div class="qrcode-card">
+    <div class="qr-frame">
+      <!-- ！！就是改了下面这一行，把 assets/ 删掉了 ！！ -->
+      <img src="qrcode.jpg" alt="微信收款码" draggable="false">
+    </div>
+    <p class="hint-text">微信扫一扫 · 求各位 <strong>施舍点</strong></p>
+  </div>
+
+  <!-- Bottom quote -->
+  <section class="quote-section">
+    <p class="quote">「 这是一个乞讨网站。<br>没什么好掩饰的，就是缺钱。<br>各位老板行行好，扫一扫，施舍点，感激不尽。」</p>
+  </section>
+
+  <footer class="footer">
+    <p class="footer-text">您的每一分施舍 · 都是我活下去的希望</p>
+  </footer>
+</div>
+
+<!-- Music toggle button -->
+<button class="music-control attention" id="musicBtn" title="点击开启声音" aria-label="切换背景音乐">
+  <div class="vinyl-ring"></div>
+  <svg id="musicIcon" viewBox="0 0 24 24"><path d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
+</button>
+
+<!-- Sound prompt bubble -->
+<div class="sound-prompt" id="soundPrompt">
+  <span class="accent">♪</span> 点击开启音乐
+</div>
+
+<script>
+(function() {
+  // ---- Create floating particles ----
+  const particlesContainer = document.getElementById('particles');
+  const particleCount = window.innerWidth > 768 ? 20 : 12;
+  for (let i = 0; i < particleCount; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (12 + Math.random() * 18) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    p.style.width = (1 + Math.random() * 2) + 'px';
+    p.style.height = p.style.width;
+    particlesContainer.appendChild(p);
+  }
+
+  // ============================================================
+  //  Ambient Music Engine (Web Audio API)
+  //  程序化生成伤感钢琴 + 雨声氛围音乐
+  // ============================================================
+  let audioCtx = null;
+  let masterGain = null;
+  let rainGain = null;
+  let pianoGain = null;
+  let reverbNode = null;
+  let isPlaying = false;
+  let isMuted = true;
+  let melodyTimer = null;
+  let rainSource = null;
+
+  // A minor pentatonic — 天然带有忧伤感
+  // A3=220, C4=261.63, D4=293.66, E4=329.63, G4=392, A4=440, C5=523.25, D5=587.33, E5=659.25
+  const scale = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.25];
+  // 低音和弦根音
+  const bassNotes = [110, 130.81, 146.83]; // A2, C3, D3
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Master gain (controls mute)
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0; // start muted
+    masterGain.connect(audioCtx.destination);
+
+    // Reverb via convolver with generated impulse
+    reverbNode = audioCtx.createConvolver();
+    reverbNode.buffer = createReverbImpulse(3.5, 2.5);
+    const reverbGain = audioCtx.createGain();
+    reverbGain.gain.value = 0.35;
+    reverbNode.connect(reverbGain);
+    reverbGain.connect(masterGain);
+
+    // Piano channel
+    pianoGain = audioCtx.createGain();
+    pianoGain.gain.value = 0.5;
+    pianoGain.connect(masterGain);
+    pianoGain.connect(reverbNode); // also send to reverb
+
+    // Rain channel
+    rainGain = audioCtx.createGain();
+    rainGain.gain.value = 0.12;
+    const rainFilter = audioCtx.createBiquadFilter();
+    rainFilter.type = 'lowpass';
+    rainFilter.frequency.value = 2400;
+    rainFilter.Q.value = 0.5;
+    rainGain.connect(rainFilter);
+    rainFilter.connect(masterGain);
+    rainFilter.connect(reverbNode);
+
+    // Start rain
+    startRain();
+    // Start melody
+    scheduleMelody();
+  }
+
+  // Generate reverb impulse response
+  function createReverbImpulse(duration, decay) {
+    const rate = audioCtx.sampleRate;
+    const length = rate * duration;
+    const impulse = audioCtx.createBuffer(2, length, rate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return impulse;
+  }
+
+  // ---- Rain sound (filtered white noise loop) ----
+  function startRain() {
+    const bufferSize = audioCtx.sampleRate * 2;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    rainSource = audioCtx.createBufferSource();
+    rainSource.buffer = buffer;
+    rainSource.loop = true;
+    rainSource.connect(rainGain);
+    rainSource.start();
+  }
+
+  // ---- Piano note (additive synthesis for warm tone) ----
+  function playPianoNote(freq, time, duration, velocity) {
+    velocity = velocity || 0.5;
+    duration = duration || 2.5;
+
+    // Fundamental + harmonics for rich piano-like tone
+    const partials = [
+      { ratio: 1,   gain: 1.0,  type: 'triangle' },
+      { ratio: 2,   gain: 0.4,  type: 'sine' },
+      { ratio: 3,   gain: 0.15, type: 'sine' },
+      { ratio: 4.01, gain: 0.08, type: 'sine' }
+    ];
+
+    const noteGain = audioCtx.createGain();
+    noteGain.connect(pianoGain);
+
+    partials.forEach(p => {
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = p.type;
+      osc.frequency.value = freq * p.ratio;
+      g.gain.value = p.gain * velocity;
+      osc.connect(g);
+      g.connect(noteGain);
+      osc.start(time);
+      osc.stop(time + duration);
+    });
+
+    // ADSR envelope — soft attack, long decay (piano-like)
+    const env = noteGain.gain;
+    env.setValueAtTime(0, time);
+    env.linearRampToValueAtTime(0.8, time + 0.015);   // attack
+    env.exponentialRampToValueAtTime(0.3, time + 0.3);  // decay
+    env.exponentialRampToValueAtTime(0.001, time + duration); // release
+  }
+
+  // ---- Bass note (low, sustained) ----
+  function playBassNote(freq, time, duration) {
+    duration = duration || 6;
+    const osc = audioCtx.createOscillator();
+    const osc2 = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sine';
+    osc2.type = 'triangle';
+    osc.frequency.value = freq;
+    osc2.frequency.value = freq * 1.005; // slight detune for warmth
+    g.gain.value = 0;
+    osc.connect(g);
+    osc2.connect(g);
+    g.connect(pianoGain);
+    g.connect(reverbNode);
+
+    const env = g.gain;
+    env.setValueAtTime(0, time);
+    env.linearRampToValueAtTime(0.18, time + 0.8);
+    env.linearRampToValueAtTime(0.12, time + duration * 0.5);
+    env.exponentialRampToValueAtTime(0.001, time + duration);
+
+    osc.start(time);
+    osc2.start(time);
+    osc.stop(time + duration);
+    osc2.stop(time + duration);
+  }
+
+  // ---- Melody scheduler ----
+  // 忧伤旋律模式：偶尔弹单音，偶尔弹双音，留白营造孤独感
+  let beatCount = 0;
+  function scheduleMelody() {
+    if (!audioCtx) return;
+    const now = audioCtx.currentTime;
+    const interval = 1.8 + Math.random() * 1.5; // 不规则节奏，更自然
+
+    // 每 4 拍弹一个低音
+    if (beatCount % 4 === 0) {
+      const bassIdx = Math.floor(Math.random() * bassNotes.length);
+      playBassNote(bassNotes[bassIdx], now, 7 + Math.random() * 3);
+    }
+
+    // 80% 概率弹旋律音
+    if (Math.random() < 0.8) {
+      const idx = Math.floor(Math.random() * scale.length);
+      const freq = scale[idx];
+      const vel = 0.3 + Math.random() * 0.35;
+      playPianoNote(freq, now, 3 + Math.random() * 2, vel);
+
+      // 30% 概率同时弹一个和声音（上方三度/五度）
+      if (Math.random() < 0.3 && idx < scale.length - 2) {
+        playPianoNote(scale[idx + 2], now + 0.02, 2.5 + Math.random() * 2, vel * 0.6);
+      }
+    }
+
+    // 15% 概率弹一个高音点缀（如雨滴落下）
+    if (Math.random() < 0.15) {
+      const highIdx = scale.length - 1 - Math.floor(Math.random() * 3);
+      playPianoNote(scale[highIdx], now + 0.3 + Math.random() * 0.5, 2, 0.2);
+    }
+
+    beatCount++;
+    melodyTimer = setTimeout(scheduleMelody, interval * 1000);
+  }
+
+  // ---- Mute / Unmute ----
+  function setMuted(muted) {
+    isMuted = muted;
+    if (!audioCtx) return;
+    const target = muted ? 0 : 0.7;
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(target, audioCtx.currentTime + 0.8);
+  }
+
+  // ---- UI Controls ----
+  const btn = document.getElementById('musicBtn');
+  const prompt = document.getElementById('soundPrompt');
+
+  function activate() {
+    if (!audioCtx) initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    setMuted(false);
+    isPlaying = true;
+    btn.classList.add('playing');
+    btn.classList.remove('attention');
+    prompt.classList.add('hidden');
+  }
+
+  function deactivate() {
+    setMuted(true);
+    isPlaying = false;
+    btn.classList.remove('playing');
+  }
+
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (isPlaying && !isMuted) {
+      deactivate();
+    } else {
+      activate();
+    }
+  });
+
+  prompt.addEventListener('click', function(e) {
+    e.stopPropagation();
+    activate();
+  });
+
+  // ---- Auto-play strategy ----
+  // 浏览器策略：不能自动有声播放，但可以静音启动
+  // 页面加载后立即静音启动引擎，首次点击页面任意处解除静音
+  let firstInteraction = false;
+  function onFirstInteraction() {
+    if (firstInteraction) return;
+    firstInteraction = true;
+    activate();
+  }
+
+  // 监听多种首次交互事件
+  ['pointerdown', 'keydown', 'touchstart'].forEach(evt => {
+    document.addEventListener(evt, onFirstInteraction, { once: true, passive: true });
+  });
+
+  // 页面加载后延迟静音启动引擎（让音频上下文就绪）
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        // 静音状态下音乐已在播放，等用户点击解除静音
+      } catch(e) {}
+    }, 800);
+  });
+})();
+</script>
+
+</body>
+</html>
